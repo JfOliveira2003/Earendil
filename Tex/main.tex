@@ -11,6 +11,9 @@
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{float}
 
 \graphicspath{{figuras/}}
 
@@ -32,35 +35,64 @@
 
 \sloppy
 
-\title{Eärendil: Um Sistema Baseado em \emph{Machine Learning} para
-Detecção de Falhas em Pavimentos Urbanos por Meio de Drones}
 
-\author{Fabrício José\inst{1}, Marco Abbud\inst{1}}
+\newcommand{\titulotrabalho}{Eärendil: Um Sistema Baseado em
+\emph{Machine Learning} para Detecção de Falhas em Pavimentos Urbanos por
+Meio de Drones}
+
+\title{\titulotrabalho}
+
+\author{Fabrício José\inst{1}}
 
 \address{Universidade Federal de Ciência e Inovação do Rio de Janeiro\\
   Rio de Janeiro, RJ, Brasil
-  \email{fabricio.macedo@aluno.cefet-rj.br, marco.abbud@cefet-rj.br}
+  \email{fabricio.macedo@aluno.cefet-rj.br}
   % TODO: ajustar o e-mail do orientador
 }
 
 \begin{document}
+% =====================================================================
+% CAPA (PROVISORIA)
+% TODO: substituir este bloco pelo modelo LaTeX da pasta "TCC 2" da
+% equipe, conforme orientacao do professor. Os campos marcados com
+% TODO precisam ser preenchidos ou confirmados.
+\begin{titlepage}
+  \centering
+  \vspace*{0.5cm}
+  {\large\bfseries Universidade Federal de Ciência e Inovação do Rio de
+    Janeiro\par}
+  \vspace{0.3cm}
+  {\large \textbf{Bacharelado em Sistemas de Informação}\par}
+  \vfill
+  {\large Fabrício José de Oliveira Macedo\par}
+  \vfill
+  {\large\bfseries PROPOSTA DE TRABALHO DE CONCLUSÃO DE CURSO\par}
+  \vspace{1.2cm}
+  {\Large\bfseries \titulotrabalho\par}
+  \vfill
+  \hfill\begin{minipage}{0.45\textwidth}
+    \raggedright
+    Orientador: Marco Abbud % TODO: confirmar nome completo e titulacao
+  \end{minipage}
+  \vfill
+  {\large Rio de Janeiro, RJ\\ 2026\par}
+\end{titlepage}
+
+% SUMARIO
+% O ambiente titlepage zera o contador de paginas (a capa vira a pagina 0).
+% Reiniciamos em 2 para que os numeros do sumario coincidam com a posicao
+% real das paginas no PDF (capa = 1, sumario = 2, resumo/introducao = 3).
+\setcounter{page}{2}
+\tableofcontents
+\clearpage
 
 \maketitle
 
 
-\begin{abstract}
-  This work proposes Earendil, an integrated, low-cost and open-source
-  system for automatic pothole detection on urban pavements from
-  drone-captured images. The system comprises four components: an
-  external image source (drone), a backend responsible for ingestion,
-  normalization and persistence, a YOLO26-based inference service, and a
-  web interface that displays georeferenced records on a map. The
-  detector is trained on a unified dataset built from the public
-  UAV-PDD2023 and RDD2022 benchmarks, restricted to aerial capture, and
-  evaluated with standard object detection metrics.
-\end{abstract}
+
 
 \begin{resumo}
+
   Este trabalho propõe o Earendil, um sistema integrado, de baixo custo e
   baseado em componentes de código aberto para a detecção automática de
   buracos em pavimentos urbanos a partir de imagens capturadas por drone.
@@ -81,8 +113,8 @@ Detecção de Falhas em Pavimentos Urbanos por Meio de Drones}
 A malha rodoviária é o principal meio de circulação de pessoas e de
 cargas no Brasil, e sua conservação tem efeito direto sobre a segurança
 dos usuários e sobre o custo do transporte. A Pesquisa CNT de Rodovias
-2025 avaliou 114.197 km de vias pavimentadas e classificou 62,1\% da
-extensão como regular, ruim ou péssima em seu estado geral; segundo o
+2025 (CNT, 2025) avaliou 114.197 km de vias pavimentadas e classificou 62,1\% da
+extensão como regular, ruim ou péssima em seu estado geral. Segundo o
 mesmo levantamento, a qualidade do pavimento eleva em média 31,2\% os
 custos operacionais do transporte rodoviário no país (CNT, 2025). O
 quadro é ainda mais desfavorável nas rodovias sob gestão pública, em que
@@ -114,7 +146,7 @@ O uso de veículos aéreos não tripulados (VANTs), popularmente chamados de
 drones, associado a técnicas de visão computacional, apresenta-se como
 alternativa promissora. O drone cobre grandes áreas em pouco tempo,
 alcança trechos de difícil acesso, dispensa a interrupção do tráfego e
-não expõe o operador ao risco de atropelamento; além disso, registra a
+não expõe o operador ao risco de atropelamento. Além disso, registra a
 posição de captura por meio de GPS embarcado. Sobre essas imagens,
 detectores de objetos em tempo real da família YOLO (\emph{You Only Look
 Once}), que processam a imagem inteira em uma única passagem pela rede
@@ -188,6 +220,48 @@ permite que o modelo seja substituído ou re-treinado sem alteração dos
 demais módulos e que a fonte de imagens seja trocada sem impacto no
 restante do sistema.
 
+\begin{figure}[ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\footnotesize,
+  >={Stealth[length=2mm]},
+  comp/.style={draw, rounded corners=3pt, thick, minimum width=2.8cm,
+    minimum height=1.2cm, align=center, fill=blue!10},
+  ext/.style={draw, rounded corners=3pt, thick, minimum width=2.8cm,
+    minimum height=1.2cm, align=center, fill=orange!15},
+  store/.style={cylinder, shape border rotate=90, aspect=0.25, draw, thick,
+    minimum width=2.4cm, minimum height=1.4cm, align=center, fill=gray!15},
+  flow/.style={<->, thick},
+  lbl/.style={font=\scriptsize, align=center, fill=white, inner sep=1.5pt}
+]
+
+% Linha superior: fonte externa, backend e frontend
+\node[ext]  (drone)   {\textbf{Fonte externa}\\ (drone)\\ \scriptsize(1) captura imagem + GPS};
+\node[comp, right=3cm of drone]   (backend) {\textbf{Backend}\\ \scriptsize orquestração e API};
+\node[ext, right=3cm of backend]  (front)   {\textbf{Frontend}\\ \scriptsize visualização listagem};
+
+% Linha inferior: modelo e persistência
+\node[comp, below=2.4cm of backend, xshift=-3.6cm] (model) {\textbf{Modelo}\\ \scriptsize YOLO26};
+\node[store, below=2.4cm of backend]               (files) {\textbf{Repositório de arquivos}\\ \scriptsize Local ou Cloud (AWS S3)};
+\node[store, below=2.4cm of backend, xshift=3.6cm] (db)    {\textbf{Banco de dados}\\ \scriptsize MongoDB};
+
+% Interfaces
+\draw[->, thick] (drone) -- node[lbl] {(2) envio HTTP\\ imagem + GPS\\ + instante} (backend);
+\draw[<-, thick] (backend) -- node[lbl] {(6) consulta\\ (API HTTP)} (front);
+
+\draw[flow] (backend.south west) -- node[lbl] {(4) imagem /\\ detecções} (model.north);
+\draw[->, thick] (backend.south)  -- node[lbl] {(3) grava\\ imagem} (files.north);
+\draw[flow] (backend.south east) -- node[lbl] {(3) cria registro\\ (5) atualiza\\ resultado} (db.north);
+
+\end{tikzpicture}}
+\caption{Arquitetura proposta para o Earendil: componentes e interfaces.
+Os números entre parênteses correspondem às etapas do fluxo de execução
+(Seção~\ref{sec:fluxo}).}
+\label{fig:arquitetura}
+\fonte{elaborado pelo autor, 2026.}
+\end{figure}
+
 \textbf{Fonte externa (drone).} Responsável por registrar as imagens do
 pavimento e enviá-las ao \emph{backend}. A captura ocorre em voo a baixa
 altitude sobre a via, com a câmera apontada para a superfície; cada
@@ -251,6 +325,76 @@ indicar em que trecho da via o defeito se encontra.
     e na listagem, permitindo a inspeção individual de cada ocorrência.
 \end{enumerate}
 
+A Figura~\ref{fig:sequencia} apresenta o diagrama de sequência
+correspondente a esse fluxo.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\footnotesize,
+  >={Stealth[length=2mm]},
+  part/.style={draw, rounded corners=2pt, thick, minimum width=1.9cm,
+    minimum height=0.9cm, align=center, fill=blue!10},
+  life/.style={densely dashed, gray},
+  msg/.style={->, thick},
+  ret/.style={->, thick, densely dashed},
+  lbl/.style={font=\scriptsize, align=center, fill=white, inner sep=1pt}
+]
+
+% Posicao horizontal de cada participante
+\def\xfe{0}   \def\xdr{2.4}  \def\xbe{4.8}
+\def\xar{7.2} \def\xdb{9.6}  \def\xmd{12.0}
+
+\node[part] (fe) at (\xfe,0) {Frontend};
+\node[part] (dr) at (\xdr,0) {Drone\\ \scriptsize(fonte externa)};
+\node[part] (be) at (\xbe,0) {Backend};
+\node[part] (ar) at (\xar,0) {Repositório\\ \scriptsize de arquivos};
+\node[part] (db) at (\xdb,0) {Banco de\\ \scriptsize dados};
+\node[part] (md) at (\xmd,0) {Modelo\\ \scriptsize(YOLO26)};
+
+% Linhas de vida
+\foreach \p in {fe,dr,be,ar,db,md}
+  \draw[life] (\p.south) -- ++(0,-12.0);
+
+% 1. Captura (mensagem a si mesmo)
+\draw[msg] (\xdr,-1.0) -- ++(0.7,0) -- ++(0,-0.45) -- ++(-0.7,0);
+\node[lbl, anchor=west] at (\xdr+0.75,-1.22) {captura imagem\\ + GPS};
+
+% 2. Envio ao backend
+\draw[msg] (\xdr,-2.5) -- node[lbl, above] {envia imagem\\ + GPS + instante} (\xbe,-2.5);
+
+% 3. Validacao, armazenamento e registro inicial
+\draw[msg] (\xbe,-3.5) -- ++(0.7,0) -- ++(0,-0.45) -- ++(-0.7,0);
+\node[lbl, anchor=west] at (\xbe+0.75,-3.72) {valida e\\ renomeia};
+\draw[msg] (\xbe,-4.9) -- node[lbl, above] {grava imagem} (\xar,-4.9);
+\draw[msg] (\xbe,-5.9) -- node[lbl, above, pos=0.75] {cria registro\\ (pendente)} (\xdb,-5.9);
+
+% 4. Inferencia
+\draw[msg] (\xbe,-6.9) -- node[lbl, above, pos=0.85] {imagem} (\xmd,-6.9);
+\draw[ret] (\xmd,-7.8) -- node[lbl, above, pos=0.15] {detecções\\ (classe, confiança,\\ caixas)} (\xbe,-7.8);
+
+% 5. Atualizacao do registro
+\draw[msg] (\xbe,-9.1) -- node[lbl, above, pos=0.75] {atualiza registro\\ (confirmado / descartado)} (\xdb,-9.1);
+
+% Separador: consulta ocorre de forma independente da ingestao
+\draw[densely dotted, thick] (-1.1,-9.9) -- (13.1,-9.9);
+\node[lbl] at (6.0,-9.9) {consulta pelo usuário (a qualquer momento)};
+
+% 6. Consulta pelo frontend
+\draw[msg] (\xfe,-11.0) -- node[lbl, above, pos=0.75] {consulta\\ registros} (\xbe,-11.0);
+\draw[ret] (\xbe,-11.9) -- node[lbl, above, pos=0.25] {registros +\\ imagem anotada} (\xfe,-11.9);
+
+\end{tikzpicture}}
+\caption{Diagrama de sequência do fluxo principal do Earendil, da
+captura da imagem à consulta do registro no \emph{frontend}.}
+\label{fig:sequencia}
+\fonte{elaborado pelo autor, 2026.}
+\end{figure}
+
+
+
+
 \subsection{Contribuições esperadas}
 \label{sec:contribuicoes}
 
@@ -298,7 +442,7 @@ referência de projeto.
 
 As diferenças, contudo, são relevantes. No PDS-UAV, o envio das imagens é
 uma ação manual do servidor, que preenche um formulário com coordenadas e
-distrito antes de acionar a predição; no Earendil, a ingestão é
+distrito antes de acionar a predição. No Earendil, a ingestão é
 automatizada por uma interface programática, e a coordenada vem do
 próprio GPS do equipamento. Enquanto o PDS-UAV utiliza YOLOv8, esta
 proposta avalia o YOLO26, arquitetura cuja saída direta, sem etapa de
@@ -352,10 +496,10 @@ pavimentos a partir de imagens de drone com modelos YOLO treinados no
 Roboflow e executados em Google Colab. Desenvolveram cinco modelos, dos
 quais quatro foram avaliados: o mais consistente, com 909 imagens de
 treino e curadoria manual intensiva, alcançou mAP@50 de 55,8\%, precisão
-de 60,6\% e revocação de 56,4\%; já um modelo treinado de forma
+de 60,6\% e revocação de 56,4\%. Já um modelo treinado de forma
 automatizada, sem verificação manual das anotações e com base 2,5 vezes
 maior, caiu para mAP@50 de 29,5\%. A conclusão é que a qualidade das
-anotações é mais determinante que o volume bruto de dados, e portanto é a
+anotações é mais determinante que o volume bruto de dados. Esta é, portanto, a
 principal lição incorporada por esta proposta e justifica a decisão de
 partir de \emph{datasets} de referência revisados por pares, com
 anotações validadas, em vez de compor uma base própria por coleta
@@ -483,7 +627,7 @@ adequada, os seguintes aspectos ficam explicitamente fora do escopo:
     auxiliares no treinamento, mas não serão objeto de avaliação nem de
     exibição no \emph{frontend}.
   \item \textbf{Inferência a bordo e planejamento autônomo de voo.} A
-    inferência ocorre no servidor, e não no drone; o planejamento de
+    inferência ocorre no servidor, e não no drone. O planejamento de
     rota, o controle do voo e a conformidade com a regulamentação de
     operação de VANTs não são tratados.
   \item \textbf{Integração com sistemas de gestão municipal e fluxo de
@@ -492,7 +636,7 @@ adequada, os seguintes aspectos ficam explicitamente fora do escopo:
     integração com sistemas legados de prefeituras.
   \item \textbf{Operação em escala de produção.} Não se pretende
     dimensionar o sistema para uso municipal contínuo, com alta
-    disponibilidade e processamento de grandes volumes; o resultado é um
+    disponibilidade e processamento de grandes volumes. O resultado é um
     protótipo funcional validado em escala experimental.
 \end{itemize}
 
@@ -629,7 +773,7 @@ O Earendil destina-se à inspeção viária por drone, mas o conjunto
 unificado construído a partir do RDD2022 e do UAV-PDD2023 não
 representava essa perspectiva. Das 5.062 imagens reunidas na primeira
 versão do conjunto, apenas 261, cerca de 5\%, haviam sido capturadas por
-VANT; as demais provinham de câmeras embarcadas em automóveis e
+VANT, as demais provinham de câmeras embarcadas em automóveis e
 motocicletas. As duas perspectivas não constituem variações menores de um
 mesmo problema de visão, como sintetiza a Tabela~\ref{tab:perspectivas}.
 
@@ -645,7 +789,7 @@ mesmo problema de visão, como sintetiza a Tabela~\ref{tab:perspectivas}.
 \textbf{Aspecto} & \textbf{Captura em nível de solo} &
 \textbf{Captura por drone} \\
 \hline
-Atitude da câmera & Oblíqua, com o horizonte no quadro &
+Altitude da câmera & Oblíqua, com o horizonte no quadro &
 Nadir (perpendicular ao solo) \\
 Cobertura da via & Terço inferior da imagem & Imagem inteira \\
 Conteúdo da cena & Céu, edificações, tráfego, vegetação &
@@ -735,7 +879,7 @@ Todas as imagens que contêm ao menos um buraco são retidas. A elas
 somam-se exemplos negativos na proporção de 0,33 negativo por positivo,
 amostrados aleatoriamente sob a semente fixa. A presença controlada de
 negativos expõe o detector a pavimento íntegro e a patologias que não são
-buraco, reduzindo a tendência a predizer em excesso; a proporção é
+buraco, reduzindo a tendência a predizer em excesso. A proporção é
 mantida deliberadamente abaixo da paridade para não diluir o sinal
 positivo em um conjunto já reduzido.
 
@@ -949,7 +1093,7 @@ falsos positivos e falsos negativos, para identificar os confundidores
 recorrentes já apontados na literatura, como remendos, manchas de óleo,
 sombras intensas e bueiros.
 
-\subsection{Tecnologias e justificativas}
+\subsection{Tecnologias}
 \label{sec:tecnologias}
 
 \textbf{Modelo e treinamento.} Python, com PyTorch e a biblioteca
@@ -964,7 +1108,7 @@ tratamento de envios concorrentes de imagens) e pela geração automática
 de documentação da API, que facilita o desenvolvimento independente do
 \emph{frontend}. Manter o \emph{backend} na mesma linguagem do modelo
 elimina a necessidade de uma camada de comunicação entre processos em
-linguagens distintas. A persistência usará MariaDB, por sua maturidade no
+linguagens distintas. A persistência usará MongoDB, por sua simplicidade e maturidade no
 tratamento de tipos numéricos e temporais e pela disponibilidade de
 extensões geoespaciais caso a evolução do projeto as demande, com acesso
 via \emph{shell} (linha de comando).
@@ -1042,7 +1186,6 @@ As atividades estão distribuídas entre Projeto Final I, dedicado à
 fundamentação, à modelagem, à preparação dos dados e aos primeiros
 experimentos de treinamento, e Projeto Final II, voltado ao refinamento
 do modelo, à construção do \emph{frontend}, à integração e à validação.
-Nenhuma atividade havia sido executada até a elaboração desta proposta.
 
 
 \newcommand{\x}{$\bullet$}
@@ -1162,4 +1305,3 @@ pavement distress detection based on UAV images. \emph{Data in Brief},
 \end{referencias}
 
 \end{document}
-
